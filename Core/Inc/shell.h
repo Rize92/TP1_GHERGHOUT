@@ -17,9 +17,9 @@
 // CR = carriage return, retour chariot
 #define ASCII_CR 0x0D
 // DEL = delete
-#define ASCII_DEL 0x7F
+#define ASCII_DEL 0x08
 // BS = backspace
-#define ASCII_BS 0x08
+#define ASCII_BS 0x7F
 
 
 
