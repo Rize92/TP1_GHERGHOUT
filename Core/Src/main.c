@@ -104,6 +104,7 @@ int main(void)
 	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_2);
+	HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -117,6 +118,7 @@ int main(void)
 				shellPrompt();
 			}
 			uartRxReceived = 0;
+
 		}
     /* USER CODE END WHILE */
 

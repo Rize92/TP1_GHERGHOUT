@@ -1,5 +1,6 @@
 #MicroXplorer Configuration settings - do not modify
 File.Version=6
+GPIO.groupedBy=Group By Peripherals
 KeepUserPlacement=false
 Mcu.CPN=STM32G474RET6
 Mcu.Family=STM32G4
@@ -204,4 +205,4 @@ VP_TIM1_VS_ClockSourceINT.Mode=Internal
 VP_TIM1_VS_ClockSourceINT.Signal=TIM1_VS_ClockSourceINT
 board=NUCLEO-G474RE
 boardIOC=true
-isbadioc=false
+isbadioc=true
