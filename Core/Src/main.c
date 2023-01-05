@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -39,6 +41,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_BUF_SIZE	8
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,6 +57,9 @@
 extern uint8_t uartRxReceived;
 extern uint8_t uartRxBuffer[UART_RX_BUFFER_SIZE];
 extern uint8_t uartTxBuffer[UART_TX_BUFFER_SIZE];
+uint16_t ADC_buffer[ADC_BUF_SIZE];
+uint8_t FLAG=0;
+uint8_t idx=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -94,8 +101,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_USART2_UART_Init();
+  MX_ADC1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 	HAL_UART_Receive_IT(&huart2, uartRxBuffer, UART_RX_BUFFER_SIZE);
 	HAL_Delay(1);
@@ -105,6 +115,9 @@ int main(void)
 	HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_2);
 
+	HAL_ADCEx_Calibration_Start(&hadc1,ADC_SINGLE_ENDED);
+	HAL_ADC_Start_DMA(&hadc1, ADC_buffer, ADC_BUF_SIZE);
+	HAL_TIM_Base_Start(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -122,6 +135,19 @@ int main(void)
 			}
 			uartRxReceived = 0;
 
+		}
+		float value=0;
+		if(FLAG==1){
+			for(idx=0;idx<ADC_BUF_SIZE;idx++){
+				value=value+ADC_buffer[ADC_BUF_SIZE];
+
+			}
+			value= value/8;    //on calcul la moyene des valeurs enregistré par le DMA dans le buffer
+			value= value*3.3/4096;
+			value= value*12;	// rapport entre tension courant
+			sprintf(uartTxBuffer,"courant: %.2f\n",value);
+			HAL_UART_Transmit(&huart2, uartTxBuffer, sizeof(uartTxBuffer), HAL_MAX_DELAY);
+			FLAG=0;
 		}
     /* USER CODE END WHILE */
 
@@ -182,6 +208,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_SET);
 	for(i=0;i<33;i++){}
 	HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_RESET);
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+ FLAG=1;
 }
 
 /* USER CODE END 4 */

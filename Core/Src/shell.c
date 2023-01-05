@@ -180,22 +180,6 @@ void shellExec(void){
 			for(i=0;i<33;i++){}
 			HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_RESET);
 		}
-	else if((strcmp(argv[0],"vitesse")==0))
-		{
-
-		int sp=atoi(argv[1]);
-		int alph;
-
-		alph=sp/3000+0,5;
-		HAL_UART_Transmit(&huart2, alph, sizeof(alph), HAL_MAX_DELAY);
-
-
-		alph=alph*5313;
-		TIM1->CCR1=alph;
-		TIM1->CCR2=5313-alph;
-
-		}
-
 	else{
 		shellCmdNotFound();
 	}
