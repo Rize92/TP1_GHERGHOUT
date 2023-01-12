@@ -1,13 +1,13 @@
 /**
-  ******************************************************************************
-  * @file    shell.c
-  * @brief   This file provides code for shell interface
-  ******************************************************************************
-  *  Created on: Nov 7, 2022
-  *      Author: nicolas
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    shell.c
+ * @brief   This file provides code for shell interface
+ ******************************************************************************
+ *  Created on: Nov 7, 2022
+ *      Author: nicolas
+ *
+ ******************************************************************************
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,44 +60,49 @@ char* argv[MAX_ARGS];
 uint8_t	argc;
 extern uint8_t uartTxBuffer[UART_TX_BUFFER_SIZE];
 extern uint8_t stringSize;
+extern uint8_t FLAG;
+extern uint8_t idx;
+extern float value ;
+extern float vitesse ;
 
+extern uint16_t ADC_buffer[10];
 
 
 /**
-  * @brief  Send a stating message
-  * @retval None
-  */
+ * @brief  Send a stating message
+ * @retval None
+ */
 void shellInit(void){
 	HAL_UART_Transmit(&huart2, started, sizeof(started), HAL_MAX_DELAY);
 	HAL_UART_Transmit(&huart2, prompt, sizeof(prompt), HAL_MAX_DELAY);
 }
 
 /**
-  * @brief  Send the prompt
-  * @retval None
-  */
+ * @brief  Send the prompt
+ * @retval None
+ */
 void shellPrompt(void){
 	HAL_UART_Transmit(&huart2, prompt, sizeof(prompt), HAL_MAX_DELAY);
 }
 
 /**
-  * @brief  Send the default message if the command is not found
-  * @retval None
-  */
+ * @brief  Send the default message if the command is not found
+ * @retval None
+ */
 void shellCmdNotFound(void){
 	HAL_UART_Transmit(&huart2, cmdNotFound, sizeof(cmdNotFound), HAL_MAX_DELAY);
 }
 
 /**
-  * @brief  Function called for saving the new character and call and setup argc and argv variable if ENTER is pressed
-  * @retval 1 if a new command is available, 0 if not.
-  */
+ * @brief  Function called for saving the new character and call and setup argc and argv variable if ENTER is pressed
+ * @retval 1 if a new command is available, 0 if not.
+ */
 uint8_t shellGetChar(void){
 	uint8_t newCmdReady = 0;
 	char* token;
 
 	switch(uartRxBuffer[0]){
-		// If Enter, update argc and argv
+	// If Enter, update argc and argv
 	case ASCII_CR:
 		HAL_UART_Transmit(&huart2, newline, sizeof(newline), HAL_MAX_DELAY);
 		cmdBuffer[idxCmd] = '\0';
@@ -126,9 +131,9 @@ uint8_t shellGetChar(void){
 }
 
 /**
-  * @brief  Call function depends of the value of argc and argv
-  * @retval None
-  */
+ * @brief  Call function depends of the value of argc and argv
+ * @retval None
+ */
 void shellExec(void){
 	if(strcmp(argv[0],"set")==0){
 		if(strcmp(argv[1],"PA5")==0 && ((strcmp(argv[2],"0")==0)||(strcmp(argv[2],"1")==0)) ){
@@ -167,19 +172,36 @@ void shellExec(void){
 		motorPowerOff();
 	}
 	else if((strcmp(argv[0],"alpha")==0))
-		{
-			int alph=atoi(argv[1]);
-			alph=alph*5313/100;
-			TIM1->CCR1=alph;
-			TIM1->CCR2=5313-alph;
-		}
+	{
+		int alph=atoi(argv[1]);
+		alph=alph*5313/100;
+		TIM1->CCR1=alph;
+		TIM1->CCR2=5313-alph;
+	}
 	else if((strcmp(argv[0],"start")==0))
-		{
-			int i;
-			HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_SET);
-			for(i=0;i<33;i++){}
-			HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_RESET);
-		}
+	{
+		int i;
+		HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_SET);
+		for(i=0;i<33;i++){}
+		HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_RESET);
+	}
+	else if((strcmp(argv[0],"mesure")==0))
+	{
+
+
+		sprintf(uartTxBuffer,"courant: %.2f A \r\n",value);
+		HAL_UART_Transmit(&huart2, uartTxBuffer, sizeof(uartTxBuffer), HAL_MAX_DELAY);
+		FLAG=0;
+	}
+	else if((strcmp(argv[0],"vitesse")==0))
+	{
+		vitesse=(vitesse-32768)/4096;
+		vitesse=vitesse/0.1*60;
+		sprintf(uartTxBuffer,"vitesse: %.2f tr/min \r\n",vitesse);
+		HAL_UART_Transmit(&huart2, uartTxBuffer, sizeof(uartTxBuffer), HAL_MAX_DELAY);
+	}
+
+
 	else{
 		shellCmdNotFound();
 	}
