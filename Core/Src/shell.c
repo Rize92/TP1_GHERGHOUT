@@ -64,6 +64,8 @@ extern uint8_t FLAG;
 extern uint8_t idx;
 extern float value ;
 extern float vitesse ;
+extern int flagA;
+extern float ireq;
 
 extern uint16_t ADC_buffer[10];
 
@@ -199,6 +201,14 @@ void shellExec(void){
 		vitesse=vitesse/0.1*60;
 		sprintf(uartTxBuffer,"vitesse: %.2f tr/min \r\n",vitesse);
 		HAL_UART_Transmit(&huart2, uartTxBuffer, sizeof(uartTxBuffer), HAL_MAX_DELAY);
+	}
+	else if((strcmp(argv[0],"asserv")==0))
+	{
+		/*if(flagAsserv==0){flagAsserv=1;}
+		if(flagAsserv==1){flagAsserv=0;}*/
+		flagA=1;
+		ireq=atoi(argv[1]);
+
 	}
 
 

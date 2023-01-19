@@ -58,18 +58,19 @@ extern uint8_t uartRxReceived;
 extern uint8_t uartRxBuffer[UART_RX_BUFFER_SIZE];
 extern uint8_t uartTxBuffer[UART_TX_BUFFER_SIZE];
 uint16_t ADC_buffer[ADC_BUF_SIZE];
-uint8_t FLAG;
+uint8_t FLAG;		// flag utilisé lors de linteruption du dma qui indique qu'il est plein
 uint8_t idx;
-float vitesse;
-float value ;
+float vitesse;		// utiliser pour la mesure de la vitesse
+float value ;		// utilisé pour la messure de la tension image du courant
 float alpha2prev=0.5;
-float kp=0.002;
-float ke=3;
-float Te=1/1600;
-float ireq=0.2;
-float eps;
+float kp=0.002;		//coeff correcteur proportionel
+float ki=3;			//coeff corrcteur integrale
+float Te=1/16000.0;	//coeff correcteur proportionel
+float ireq;			//  consigne
+float eps=0;		//erreur
 float eps_prev=0.0;
 float alpha2, alpha1 ,alf;
+int flagA;			// flag utilisé pour le lancement de l'asservisssement
 
 
 /* USER CODE END PV */
@@ -158,24 +159,42 @@ int main(void)
 			value=0;
 			for(idx=0;idx<ADC_BUF_SIZE;idx++){
 				value=value+ADC_buffer[idx];
-				value= value/10;    //on calcul la moyene des valeurs enregistré par le DMA dans le buffer
-				value= value*3.3/4096;//résolution de 12 bits
-				value= (value-2.255)*12;	// rapport entre tension courant et un offset de 0A pour 2.5V
 			}
-			FLAG=0;
+			value= value/10;    		//on calcul la moyene des valeurs enregistré par le DMA dans le buffer
+			value= (value*3.3)/4096;	//résolution de 12 bits
+			value= (value-2.255)*12;	// rapport entre tension courant et un offset de 0A pour 2.5V
+
+			if(flagA==1){
+
+				eps_prev=eps;  //stockage de l'ancienne valeur de l'erreur
+				eps=ireq-value;//calcul de l'erreur
+				alpha1=eps*kp;
+				alpha2=alpha2prev+(ki*Te/2)*(eps+eps_prev);
+
+				/*if(alpha2>1){ 	//anti windup
+					alpha2=1;
+				}
+				if(alpha2<0){
+					alpha2=0;
+				}*/
+
+				alpha2prev=alpha2;
+				alf=alpha1+alpha2;
+				/*if(alf>1){
+					alf=1;
+				}
+				if(alf<0){
+					alf=0;
+				}*/
+
+				alf=(int)(alf*5313);
+				TIM1->CCR1=alf;
+				TIM1->CCR2=5313-alf;
+			}
+
+			FLAG=0;				// on remet le flag du DMA a zero
+
 		}
-
-		eps_prev=eps;
-		eps=ireq-value ;
-		alpha1=eps*kp;
-		alpha2=alpha2prev+(ke*Te/2)*(eps+eps_prev);
-		alpha2prev=alpha2;
-		alf=alpha1*alpha2;
-
-		alf=(int)alf*5313;
-
-		TIM1->CCR1=alf;
-		TIM1->CCR2=5313-alf;
 
 
 
