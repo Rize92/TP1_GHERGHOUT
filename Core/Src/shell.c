@@ -66,6 +66,7 @@ extern float value ;
 extern float vitesse ;
 extern int flagA;
 extern float ireq;
+extern float vit;
 
 extern uint16_t ADC_buffer[10];
 
@@ -175,39 +176,37 @@ void shellExec(void){
 	}
 	else if((strcmp(argv[0],"alpha")==0))
 	{
-		int alph=atoi(argv[1]);
-		alph=alph*5313/100;
+		int alph=atoi(argv[1]);   // stockage du rapport cyclique voulu dans alph
+		alph=alph*5313/100;       // on divise par 100 car le alpha est recu en pourcentage
 		TIM1->CCR1=alph;
 		TIM1->CCR2=5313-alph;
 	}
 	else if((strcmp(argv[0],"start")==0))
 	{
 		int i;
-		HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_SET);
-		for(i=0;i<33;i++){}
-		HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_SET);//activation du GPIO
+		for(i=0;i<33;i++){} // boucle vide qui dure un peut plus de 2µs utiliser
+		HAL_GPIO_WritePin(ISO_RESET_GPIO_Port, ISO_RESET_Pin, GPIO_PIN_RESET);//desactiavtion du GPIO apres les 2µs
 	}
 	else if((strcmp(argv[0],"mesure")==0))
 	{
 
-
 		sprintf(uartTxBuffer,"courant: %.2f A \r\n",value);
-		HAL_UART_Transmit(&huart2, uartTxBuffer, sizeof(uartTxBuffer), HAL_MAX_DELAY);
-		FLAG=0;
+		HAL_UART_Transmit(&huart2, uartTxBuffer, sizeof(uartTxBuffer), HAL_MAX_DELAY);//affichage du courant
+		   //
 	}
 	else if((strcmp(argv[0],"vitesse")==0))
 	{
-		vitesse=(vitesse-32768)/4096;
+		vitesse=(vitesse-32768)/4096; 		// convertion du nombre de front montant et descendant venant de la roue codeuse en vitesse
 		vitesse=vitesse/0.1*60;
+		vit=vitesse;
 		sprintf(uartTxBuffer,"vitesse: %.2f tr/min \r\n",vitesse);
-		HAL_UART_Transmit(&huart2, uartTxBuffer, sizeof(uartTxBuffer), HAL_MAX_DELAY);
+		HAL_UART_Transmit(&huart2, uartTxBuffer, sizeof(uartTxBuffer), HAL_MAX_DELAY);//affichage de la tension
 	}
 	else if((strcmp(argv[0],"asserv")==0))
 	{
-		/*if(flagAsserv==0){flagAsserv=1;}
-		if(flagAsserv==1){flagAsserv=0;}*/
-		flagA=1;
-		ireq=atoi(argv[1]);
+		flagA=1;				//flag utiliser pour le lancement de l'asservissement
+		ireq=atoi(argv[1]);		//stockage de la consigne de courant dans ireq
 
 	}
 

@@ -72,6 +72,11 @@ float eps_prev=0.0;
 float alpha2, alpha1 ,alf;
 int flagA;			// flag utilisé pour le lancement de l'asservisssement
 
+float vit;
+float eps_vit=0;		//erreur
+float eps_prev_vit=0.0;
+float alpha2_vit, alpha1_vit;
+float omega_consigne;
 
 /* USER CODE END PV */
 
@@ -125,12 +130,12 @@ int main(void)
 	HAL_UART_Receive_IT(&huart2, uartRxBuffer, UART_RX_BUFFER_SIZE);
 	HAL_Delay(1);
 	shellInit();
-	HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);			//Lancement des 2 PWm utilisé pour la commande avec leur complémentaire
 	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
 	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_2);
 
-	HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);   // activation du TIM3  en mode encodeur
 	HAL_TIM_Base_Start_IT(&htim4);
 
 
@@ -162,7 +167,7 @@ int main(void)
 			}
 			value= value/10;    		//on calcul la moyene des valeurs enregistré par le DMA dans le buffer
 			value= (value*3.3)/4096;	//résolution de 12 bits
-			value= (value-2.255)*12;	// rapport entre tension courant et un offset de 0A pour 2.5V
+			value= (value-2.255)*12;	// rapport entre tension courant et un offset de 0A pour 2.5V (il y avais un offset suplémentaire sur notre carte )
 
 			if(flagA==1){
 
@@ -171,25 +176,25 @@ int main(void)
 				alpha1=eps*kp;
 				alpha2=alpha2prev+(ki*Te/2)*(eps+eps_prev);
 
-				/*if(alpha2>1){ 	//anti windup
+				if(alpha2>1){ 	//anti windup
 					alpha2=1;
 				}
 				if(alpha2<0){
 					alpha2=0;
-				}*/
+				}
 
 				alpha2prev=alpha2;
 				alf=alpha1+alpha2;
-				/*if(alf>1){
+				if(alf>1){
 					alf=1;
 				}
 				if(alf<0){
 					alf=0;
-				}*/
+				}
 
 				alf=(int)(alf*5313);
-				TIM1->CCR1=alf;
-				TIM1->CCR2=5313-alf;
+				TIM1->CCR1=alf;				// PWM avec le alpha calculé par le correcteur
+				TIM1->CCR2=5313-alf;		//
 			}
 
 			FLAG=0;				// on remet le flag du DMA a zero
@@ -263,7 +268,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-	FLAG=1;
+	FLAG=1;			// flag qui indique que le buffer est plein
 }
 
 /* USER CODE END 4 */
@@ -286,8 +291,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	/* USER CODE BEGIN Callback 1 */
 	if (htim->Instance == TIM4) {
-		vitesse=TIM3->CNT;
-		TIM3->CNT=32768;
+		vitesse=TIM3->CNT;		// on recupere le nombre de front montant et descendant recu par la PWM de la roue codeuse
+		TIM3->CNT=32768;		// puit on remet le compte a la moitié de la valeur max du compteur
 
 	}
 	/* USER CODE END Callback 1 */

@@ -6,4 +6,6 @@ Le moteur tourne !!Il faut réglé le rapport cyclique manuelement petit a petit
 
 affichage de la vitesse et du courant avec les commande: "vitesse" et " mesure "
 
-asservissement en fonctionne avec la commande asserv "courant voulu", nous avons commencé a trvailler sur l'asservissment en vitesse  
+asservissement en courant fonctionne avec la commande asserv "courant voulu", nous avons commencé a trvailler sur l'asservissment en vitesse
+
+Un rapport plus detailé est égalment disponible en version PDF 
